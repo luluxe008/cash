@@ -8,3 +8,9 @@ Clone the repo `git clone https://github.com/luluxe008/cash` and build it with `
 
 # Usage
 For now, it can't even run executables.
+
+# License
+See LICENSE.
+
+## More notes
+I try to make it good, so i check with valgrind.
