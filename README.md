@@ -7,7 +7,12 @@ I have high hopes for it.
 Clone the repo `git clone https://github.com/luluxe008/cash` and build it with `make`
 
 # Usage
-For now, it can't even run executables.
+it can run executable BUT, it does not replace variable like `$PATH`.
+
+# known issues
+- For now, `argv[0]` for the called program may be incorrect.
+- I assume malloc, calloc, realloc and other allocating function never fail.
+
 
 # License
 See LICENSE.

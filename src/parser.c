@@ -7,7 +7,7 @@
 #include "parser.h"
 
 void free_command(Command* command){
-    free(command->program);
+    free(command->program_name);
     for (int i=0; i<command->argc; i++){
         free(command->args[i]);
     }
@@ -49,7 +49,7 @@ Command parse_command(const char* cmd){
             arg_index = 0;
             continue;
         }
-        printf("%c", cmd[current_char]);
+        //printf("%c", cmd[current_char]);
         tmp_args[argc-1][arg_index] = cmd[current_char]; //argc must be different than 0 at this point, because after command there is a space
         arg_index+=1;
 

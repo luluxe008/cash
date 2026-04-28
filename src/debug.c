@@ -2,7 +2,7 @@
 #include "debug.h"
 
 void debug_command(Command* command){
-    printf("cmd: %s\n", command->program);
+    printf("cmd: %s\n", command->program_name);
     printf("argc: %d\n", command->argc);
     
     for (int i=0; i<command->argc; i++){

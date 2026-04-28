@@ -6,7 +6,7 @@
 #define MAX_ARG_SIZE 256
 
 typedef struct Command{
-    char* program;
+    char* program_name;
     int argc;
     char** args;
 } Command;

@@ -6,6 +6,7 @@
 //https://www.geeksforgeeks.org/c/making-linux-shell-c/
 
 #include "parser.h"
+#include "exe.h"
 #include "debug.h"
 
 
@@ -22,16 +23,24 @@ void remove_newline(char* buf){
     }
 }
 
+bool skip_empty(char* buf){
+    return strlen(buf) == 0 ;
+}
+
 int main(void){
     char cmd_buf[1024] = {0};
     while (true){
         printf("> ");
         fgets(cmd_buf, MAX_COMMAND_SIZE, stdin);
         remove_newline(cmd_buf);
-        quick_quit(cmd_buf);
-        Command res = parse_command(cmd_buf);
+        if (skip_empty(cmd_buf)) continue;
         
-        debug_command(&res);
+        quick_quit(cmd_buf);
+        
+        Command res = parse_command(cmd_buf);
+        execute_command(&res);
+        
+        //debug_command(&res);
         free_command(&res);
     }
     return 0;
