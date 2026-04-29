@@ -19,6 +19,6 @@ typedef struct Argument{
 
 Command make_command(const char* string);
 void free_command(Command* cmd);
-
+void free_argument(Argument* arg);
 
 #endif

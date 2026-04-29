@@ -5,15 +5,8 @@
 #include <stdbool.h>
 
 #include "parser.h"
+#include "debug.h"
 
-
-void debug_arg(Argument* arg){
-    if (arg->litteral){
-        printf("arg is string: %s\n", arg->litteral);
-    }else{
-        printf("arg is cmd: %p\n", (void*)arg->cmd);
-    }
-}
 
 Command make_command(const char* string){
 
@@ -72,4 +65,22 @@ Command make_command(const char* string){
     }
     Command shit = {final, argc};
     return shit;
+}
+
+void free_argument(Argument* arg){
+    if (arg->litteral){
+        free(arg->litteral);
+    }
+    if (arg->cmd){
+        free_command(arg->cmd);
+        free(arg->cmd);
+    }
+}
+
+void free_command(Command* cmd){
+    //don't free the command itself, but its inside YES
+    for (int i=0; i<cmd->argc; i++){
+        free_argument(&cmd->args[i]);
+    }
+    free(cmd->args);
 }

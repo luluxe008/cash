@@ -8,7 +8,7 @@
 //https://www.geeksforgeeks.org/c/making-linux-shell-c/
 
 #include "parser.h"
-//#include "exe.h"
+#include "exe.h"
 #include "debug.h"
 
 
@@ -40,24 +40,28 @@ bool skip_empty(char* buf){
 
 int main(void){
     char cmd_buf[1024] = {0};
-    Command command = {0};
     while (true){
         printf("> ");
         fgets(cmd_buf, MAX_COMMAND_SIZE, stdin);
         remove_newline(cmd_buf);
         if (skip_empty(cmd_buf)) continue;
         trim_trailing_spaces(cmd_buf);
-        printf("strlen(\"%s\")=%d\n", cmd_buf, strlen(cmd_buf));
+
         quick_quit(cmd_buf);
 
-        command = make_command(cmd_buf);
+        Command command = make_command(cmd_buf);
         debug_command(&command);
+        printf("\n");
+
+        CommandResult res = execute_command(&command);
+        debug_command_result(&res);
         /*
         Command res = parse_command(cmd_buf);
         execute_command(&res);
         */
         //debug_command(&res);
         //free_command(&res);
+        free_command(&command);
     }
     return 0;
 }

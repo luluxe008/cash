@@ -2,14 +2,37 @@
 #define __EXE_H__
 #include "parser.h"
 #include <stdbool.h>
+/*
+static const char* PATH[] = { //hardcoded
+    "/usr/bin/",
+    "/usr/sbin/",
+    "/usr/local/bin",
+    "/usr/local/sbin",
+    "/bin/",
+    "/sbin/", 
+};// TODO, make them read PATH*/
 
-typedef struct ExitCode{
+typedef enum ResultType{
+    ExitCode = 1,
+    ExitSignal = 2,
+    CoreDumped = 4,
+    Output = 8,
+    ErrOutput = 16,
+} ResultType;
+
+typedef struct CommandResult{
+    enum ResultType type;
     int exit_code;
-    int exit_signal;
-} ExitCode;
+    int term_signal;
+    bool core_dumped;
+    char* output;
+    char* err;
+} CommandResult;
+
+
 
 /*Execute the program. If cannot execute the program, return NULL*/
-ExitCode* execute_command(Command*);
+CommandResult execute_command(Command*);
 
 
 #endif
