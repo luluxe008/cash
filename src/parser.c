@@ -6,70 +6,70 @@
 
 #include "parser.h"
 
-void free_command(Command* command){
-    free(command->program_name);
-    for (int i=0; i<command->argc; i++){
-        free(command->args[i]);
+
+void debug_arg(Argument* arg){
+    if (arg->litteral){
+        printf("arg is string: %s\n", arg->litteral);
+    }else{
+        printf("arg is cmd: %p\n", (void*)arg->cmd);
     }
-    free(command->args);
 }
 
+Command make_command(const char* string){
 
-Command parse_command(const char* cmd){
-    /*
-    First step: find the program
-    Second step: find its argument and their number
-    argument are seprated by spaces
-    
-    */
+    //we assume there is a ) at the end
+    size_t input_len = strlen(string);
 
-
-    size_t len = strlen(cmd); 
-    char tmp_command[MAX_COMMAND_SIZE]= {0};
-    size_t current_char = 0;
-    
-    for (current_char=0; current_char<len && cmd[current_char]!=' '; current_char++){
-        tmp_command[current_char] =cmd[current_char];
-    }
-
-    char* command = malloc(strlen(tmp_command)*sizeof(char)+1);
-    strcpy(command, tmp_command);
-
+    Argument args[MAX_ARGC] = {0};
     int argc = 0;
 
-    char* tmp_args[MAX_ARGC];
 
-    int arg_index = 0;
+    size_t last_arg_start = 0;
+    size_t index=0;
 
-    for (; current_char<len; current_char++){
-        if (cmd[current_char] == ' '){
+    while (index <= input_len ){
+        if (string[index] == ' ' || string[index] == '\0' || string[index] == ')'){
+            //printf("world is between %d and %d\t", last_arg_start, index);
+            size_t word_lenght = index-last_arg_start;
+            char* word = malloc(word_lenght+1);
+            word[word_lenght] = '\0';
+            strncpy(word, string+last_arg_start, word_lenght);
+            
+            if (strcmp(word, ")") == 0){
+                free(word);
+                break;
+            }
+
+            //printf("word is %s\n", word);
+            Argument arg = {.litteral=word, .cmd=NULL};
+            args[argc] = arg;
             argc+=1;
-            tmp_args[argc-1] = malloc(MAX_ARG_SIZE*sizeof(char));
-            memset(tmp_args[argc-1], 0, MAX_ARG_SIZE);
-            arg_index = 0;
-            continue;
+
+            while (string[index] == ' ') index++;
+            last_arg_start = index;
         }
-        //printf("%c", cmd[current_char]);
-        tmp_args[argc-1][arg_index] = cmd[current_char]; //argc must be different than 0 at this point, because after command there is a space
-        arg_index+=1;
+        if (string[index] == '('){
+            Command* command = malloc(sizeof(Command));
+            *command = make_command(string+index+1);
 
+            Argument arg = {.litteral=NULL, .cmd=command};
+            while (string[index] != ')') index++;
+            index++;
+            last_arg_start = index;
+
+            args[argc] = arg;
+            argc+=1;
+        }
+
+        //if (string[inde])
+
+        index++;
     }
 
- 
-
-    char** argv = malloc(argc*sizeof(char*));
+    Argument* final = malloc(sizeof(Argument)*argc);
     for (int i=0; i<argc; i++){
-        argv[i] = malloc(strlen(tmp_args[i])*sizeof(char)+1);
-        strcpy(argv[i], tmp_args[i]);
+        final[i] = args[i];
     }
-
-    Command res = {
-        command,
-        argc,
-        argv,
-    };
-    for (int i=0; i<argc; i++){
-        free(tmp_args[i]);
-    }
-    return res;
+    Command shit = {final, argc};
+    return shit;
 }

@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS := -Wall -Wextra -pedantic -g -Werror
+CFLAGS := -Wall -Wextra -pedantic -g #-Werror
 LINKER := gcc
 
 TARGET := cash
