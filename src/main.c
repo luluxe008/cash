@@ -50,9 +50,9 @@ int main(void){
         quick_quit(cmd_buf);
 
         Command command = make_command(cmd_buf);
-        debug_command(&command);
-        printf("\n");
-
+        //debug_command(&command);
+        //printf("\n");
+        
         CommandResult res = execute_command(&command);
         debug_command_result(&res);
         /*

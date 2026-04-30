@@ -13,11 +13,11 @@ static const char* PATH[] = { //hardcoded
 };// TODO, make them read PATH*/
 
 typedef enum ResultType{
-    ExitCode = 1,
-    ExitSignal = 2,
-    CoreDumped = 4,
-    Output = 8,
-    ErrOutput = 16,
+    ExitCode,
+    ExitSignal,
+    CoreDumped,
+    Output,
+    ErrOutput,
 } ResultType;
 
 typedef struct CommandResult{
@@ -27,11 +27,10 @@ typedef struct CommandResult{
     bool core_dumped;
     char* output;
     char* err;
+    bool executed;
 } CommandResult;
 
 
-
-/*Execute the program. If cannot execute the program, return NULL*/
 CommandResult execute_command(Command*);
 
 

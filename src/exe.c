@@ -23,6 +23,18 @@ char* make_program_path(const char* base_path, const char* program_name){
     return program_path;
 }
 
+//don't forget to free it after use
+Command* _make_command_without_flag(Command* src){
+    Command* cmd = malloc(sizeof(Command));
+    // i think i will copy the whole memory
+    cmd->argc = src->argc-1;
+    cmd->args = calloc(cmd->argc, sizeof(Argument));
+    
+    memcpy(cmd->args, &src->args[1],  sizeof(Argument)*cmd->argc);
+
+    return cmd;
+}
+
 char* _resolve_argument(Argument* arg){
     /* Two cases:
         1. arg is just a litteral
@@ -35,48 +47,94 @@ char* _resolve_argument(Argument* arg){
         return arg->litteral;
     }
     else{
-        //for now, only exit code
-        CommandResult res = execute_command(arg->cmd);
-        char* s = malloc(25); // 25 may be enough
-        sprintf(s, "%d", res.exit_code);
-        return s;
+        // First we check for flags:
+        //     - "c" for exit code
+        //     - "s" for exit signal
+        //     - "o" for stdout-output
+        //     - "e" for stderr-output
+        //     - "d" to check if core dumped
+        //     - None, which will be equivalent to c
+        Command* cmd;
+        char* final;
+
+        if (arg->cmd->argc > 1 &&  // the subcommand has more than one arg
+            arg->cmd->args[0].litteral && //the first subcommand arg is a litteral
+            strlen(arg->cmd->args[0].litteral) == 1 // its size is one
+        )
+        {
+            char flag = arg->cmd->args[0].litteral[0];
+            cmd = _make_command_without_flag(arg->cmd);
+            CommandResult res = execute_command(cmd);
+            switch (flag)
+            {
+            case 'c':
+                final = malloc(25); // should be enough
+                sprintf(final, "%d", res.exit_code);
+                break;
+            case 's':
+                final = malloc(25); // should be enough
+                sprintf(final, "%d", res.term_signal);
+                break;
+            case 'o':
+                final = malloc(19); // should be enough
+                strcpy(final, "unimplemented(out)");
+                break;
+            case 'e':
+                final = malloc(19); // should be enough
+                strcpy(final, "unimplemented(err)");
+                break;
+            case 'd':
+                if (res.core_dumped){
+                    final = malloc(5);
+                    strcpy(final, "true");
+                }else{
+                    final = malloc(6);
+                    strcpy(final, "false");
+                }
+                break;
+            default:
+                printf("Unknown flag %c, continuing...\n", flag);
+                break;
+            }
+        }else{
+            cmd = arg->cmd;
+            CommandResult res = execute_command(cmd);
+            final = malloc(25); // should be enough
+            sprintf(final, "%d", res.exit_code);
+        }
+        return final;
     }
 }
 
 CommandResult execute_command(Command* command){
     /*Steps:
-        First we check for flags:
-            - "c" for exit code
-            - "s" for exit signal
-            - "o" for stdout-output
-            - "e" for stderr-output
-            - "d" to check if core dumped
-            - None, which will be equivalent to c
+        
         Second, we locate the binary
         Third we fork and execv
     */
 
     //we skip flag check for now
+    char* program_name = _resolve_argument(&command->args[0]);
 
 
-     CommandResult res = { // this is garbage
+    
+
+    CommandResult res = { // this is garbage
             .type = 0,
             .exit_code = -1,
             .term_signal = -1,
             .core_dumped = false,
             .output = false,
-            .err = false
+            .err = false,
+            .executed = false,
     };
    
-    char* program_name = _resolve_argument(&command->args[0]);
 
     char* program_path = make_program_path("/usr/bin/", program_name);
 
-    printf("program name is : \"%s\"\n", program_name);
-    printf("program path is : %s\n", program_path);
-
     if (!can_acces_program(program_path)){
         printf("cash: Unable to open \"%s\": %s\n", program_name, strerror(errno));
+        free(program_path);
         return res;
     }
 
@@ -90,6 +148,8 @@ CommandResult execute_command(Command* command){
         //child
         char **argv = malloc((command->argc+2)*sizeof(char*)); //FIXME, if a subcommand expands to more, there are more argc
         // +2 for program_name and final NULL
+        memset(argv, 0, (command->argc+2)*sizeof(char*));
+
         argv[0] = program_name;
         argv[command->argc+1] = NULL;
         for (int i=1; i<command->argc; i++){
@@ -97,6 +157,7 @@ CommandResult execute_command(Command* command){
 
             argv[i] = calloc(strlen(arg)+1, sizeof(char));
             strcpy(argv[i], arg);
+
         }
 
 
@@ -119,11 +180,15 @@ CommandResult execute_command(Command* command){
         if (WCOREDUMP(wstatus)){
             res.core_dumped = true;
         }
-        
+
         free(program_path);
         
         return res;
     }
 
-    return res; //unreachable
+    //unreachable 
+    // branch 1: return with executed set to false
+    // branch 2: execv
+    // branch 3: return
+    return res; 
 }

@@ -40,6 +40,10 @@ void debug_arg(const Argument* arg){
 }
 
 void debug_command_result(const CommandResult* res){
+    if (!res->executed){
+        printf("comand not executed");
+        return;
+    }
     printf("exit code: %d\n", res->exit_code);
     printf("term signal: %d\n", res->term_signal);
     printf("core dumped: %s\n", res->core_dumped ? "true" : "false");
