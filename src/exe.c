@@ -8,7 +8,11 @@
 #include <sys/wait.h>
 #include <errno.h>
 
+#include <limits.h>
+
 #include "debug.h"
+
+
 
 bool can_acces_program(const char* program_path){
     return access(program_path, R_OK | X_OK) == 0; // file can be read and executed
@@ -64,7 +68,14 @@ char* _resolve_argument(Argument* arg){
         {
             char flag = arg->cmd->args[0].litteral[0];
             cmd = _make_command_without_flag(arg->cmd);
-            CommandResult res = execute_command(cmd);
+            bool save_stdout = false;
+            bool save_stderr = false;
+
+            if (flag == 'e') save_stderr = true;
+            if (flag == 'o') save_stdout = true;
+
+            CommandResult res = execute_command(cmd, save_stdout, save_stderr);
+
             switch (flag)
             {
             case 'c':
@@ -76,13 +87,14 @@ char* _resolve_argument(Argument* arg){
                 sprintf(final, "%d", res.term_signal);
                 break;
             case 'o':
-                final = malloc(19); // should be enough
-                strcpy(final, "unimplemented(out)");
+                final = res.output;
                 break;
+
             case 'e':
-                final = malloc(19); // should be enough
-                strcpy(final, "unimplemented(err)");
+                //printf("in stderr: %s\n", res.err);
+                final = res.err;
                 break;
+
             case 'd':
                 if (res.core_dumped){
                     final = malloc(5);
@@ -93,12 +105,12 @@ char* _resolve_argument(Argument* arg){
                 }
                 break;
             default:
-                printf("Unknown flag %c, continuing...\n", flag);
+                printf("Unknown flag %c, continuing...\n", flag); //put warning here
                 break;
             }
         }else{
             cmd = arg->cmd;
-            CommandResult res = execute_command(cmd);
+            CommandResult res = execute_command(cmd, false, false);
             final = malloc(25); // should be enough
             sprintf(final, "%d", res.exit_code);
         }
@@ -106,7 +118,7 @@ char* _resolve_argument(Argument* arg){
     }
 }
 
-CommandResult execute_command(Command* command){
+CommandResult execute_command(Command* command, bool save_stdout, bool save_stderr ){
     /*Steps:
         
         Second, we locate the binary
@@ -139,14 +151,24 @@ CommandResult execute_command(Command* command){
     }
 
 
+    int pipe_fd[2];
+
+    if (save_stdout || save_stderr){
+        if (pipe(pipe_fd) == -1){
+            perror("pipe init");
+            exit(EXIT_FAILURE);
+        }
+    }
+
     pid_t pid = fork();
     if (pid < 0){
         perror("fork failed");
         exit(EXIT_FAILURE);
     }
+
     else if (pid == 0){
         //child
-        char **argv = malloc((command->argc+2)*sizeof(char*)); //FIXME, if a subcommand expands to more, there are more argc
+        char **argv = malloc((command->argc+2)*sizeof(char*)); 
         // +2 for program_name and final NULL
         memset(argv, 0, (command->argc+2)*sizeof(char*));
 
@@ -160,17 +182,57 @@ CommandResult execute_command(Command* command){
 
         }
 
+        
+        if (save_stdout){
+            dup2(pipe_fd[1], STDOUT_FILENO);
+            close(pipe_fd[0]);
+            //close(pipe_fd[1]);
+
+        }
+        if (save_stderr){
+            dup2(pipe_fd[1], STDERR_FILENO);
+            close(pipe_fd[0]);
+            //close(pipe_fd[1]);
+        }
 
         execv(program_path, argv);
     }
     else{
         //parent
         int wstatus;
+
+        char* stdout_buf = NULL;
+        char* stderr_buf = NULL;
+
+
+        if (save_stdout){
+            close(pipe_fd[1]);
+
+            char buf[1024];
+            int nbytes = read(pipe_fd[0], buf, sizeof(buf));
+            stdout_buf = malloc(nbytes+1);
+            memcpy(stdout_buf, buf, nbytes);
+            stdout_buf[nbytes] = '\0';       
+            
+            
+        }
+        if (save_stderr){
+            close(pipe_fd[1]);
+
+            char buf[1024];
+            int nbytes = read(pipe_fd[0], buf, sizeof(buf));
+            stderr_buf = malloc(nbytes+1);
+            memcpy(stderr_buf, buf, nbytes);
+            stderr_buf[nbytes] = '\0';
+            //printf("in stderr, we find: %s\n", stderr_buf);       
+        }
+
         wait(&wstatus);
-
-
-        printf("process over\n");
+        //printf("process over\n");
         
+        
+
+        res.executed = true;
         if (WIFEXITED(wstatus)){
             res.exit_code = WEXITSTATUS(wstatus);
         }
@@ -180,6 +242,11 @@ CommandResult execute_command(Command* command){
         if (WCOREDUMP(wstatus)){
             res.core_dumped = true;
         }
+
+        res.output  =   stdout_buf;
+        
+        res.err     =   stderr_buf;
+
 
         free(program_path);
         

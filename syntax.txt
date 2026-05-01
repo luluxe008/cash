@@ -1,0 +1,13 @@
+echo (subcommand arg1 arg2 arg3) arg2
+0    1                           2
+
+Subcommand can have flags before them
+echo (o ls .)
+This will put the whole stdout of 'ls .' into the second argument (argv[1]) of 'echo'
+
+Flags are:
+    c: for exit code
+    s: for term signal 
+    o: for stdout (don't print in the terminal)
+    e: for stderr
+    d: for core dumped

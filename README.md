@@ -4,7 +4,7 @@ A shell written in C like no one ever did. For now it's really basic and it's ju
 I have high hopes for it.
 
 # Building
-Clone the repo `git clone https://github.com/luluxe008/cash` and build it with `make`
+Clone the repo `git clone https://github.com/luluxe008/cash`, create obj/ and build/ with `mkdir build/ obj/` and build it with `make`
 
 # Usage
 it can run executable BUT, it does not replace variable like `$PATH`.

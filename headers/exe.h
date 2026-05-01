@@ -12,7 +12,7 @@ static const char* PATH[] = { //hardcoded
     "/sbin/", 
 };// TODO, make them read PATH*/
 
-typedef enum ResultType{
+typedef enum ResultType{ //FIXME unused
     ExitCode,
     ExitSignal,
     CoreDumped,
@@ -30,8 +30,7 @@ typedef struct CommandResult{
     bool executed;
 } CommandResult;
 
-
-CommandResult execute_command(Command*);
+CommandResult execute_command(Command* command, bool save_stdout, bool save_stderr );
 
 
 #endif

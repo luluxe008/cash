@@ -41,7 +41,7 @@ void debug_arg(const Argument* arg){
 
 void debug_command_result(const CommandResult* res){
     if (!res->executed){
-        printf("comand not executed");
+        printf("comand not executed\n");
         return;
     }
     printf("exit code: %d\n", res->exit_code);

@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <unistd.h> //getcwd chdir execv fork pipe
 #include <ctype.h>
+#include <signal.h>
 
 //https://www.geeksforgeeks.org/c/making-linux-shell-c/
 
@@ -11,6 +12,8 @@
 #include "exe.h"
 #include "debug.h"
 
+#include <sys/types.h> 
+extern pid_t child_pid;
 
 void quick_quit(const char* buf){
     if (strcmp(buf, "q") == 0 || strcmp(buf, "quit") == 0 || strcmp(buf, "exit") == 0 ){
@@ -38,8 +41,16 @@ bool skip_empty(char* buf){
     return strlen(buf) == 0 ;
 }
 
+
+void sigint_handler(int sig){
+    exit(EXIT_SUCCESS);
+}
+
 int main(void){
     char cmd_buf[1024] = {0};
+
+    signal(SIGINT, sigint_handler);
+    
     while (true){
         printf("> ");
         fgets(cmd_buf, MAX_COMMAND_SIZE, stdin);
@@ -53,7 +64,7 @@ int main(void){
         //debug_command(&command);
         //printf("\n");
         
-        CommandResult res = execute_command(&command);
+        CommandResult res = execute_command(&command, false, false);
         debug_command_result(&res);
         /*
         Command res = parse_command(cmd_buf);
